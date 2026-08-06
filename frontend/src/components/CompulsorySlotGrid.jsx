@@ -119,11 +119,11 @@ export default function CompulsorySlotGrid({
                   }
                 }}
                 disabled={slot.status !== 'AVAILABLE'}
-                className={`p-3 rounded-2xl border transition-all text-left relative flex flex-col justify-between h-28 ${bgColor}`}
+                className={`p-3 rounded-2xl border transition-all text-left relative flex flex-col justify-between min-h-[115px] ${bgColor}`}
               >
                 {/* AI Tag */}
                 {isAIRecommended && (
-                  <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-[9px] font-black shadow-md flex items-center space-x-0.5">
+                  <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-[9px] font-black shadow-md flex items-center space-x-0.5 z-10">
                     <span>AI TOP PICK</span>
                   </div>
                 )}
@@ -131,32 +131,36 @@ export default function CompulsorySlotGrid({
                 {/* Top Info */}
                 <div className="flex items-center justify-between w-full">
                   <span className="font-extrabold text-sm tracking-tight">{slot.slotNumber}</span>
-                  {slot.isEVCharger && (
-                    <span className="p-1 rounded-md bg-blue-500 text-white" title={`${slot.chargerKw || 150}kW Fast Charger`}>
-                      <Zap className="w-3 h-3 fill-white" />
-                    </span>
-                  )}
-                  {slot.type === 'ACCESSIBLE' && (
-                    <span className="p-1 rounded-md bg-emerald-600 text-white">
-                      <Accessibility className="w-3 h-3" />
-                    </span>
-                  )}
-                  {slot.type === 'VIP' && (
-                    <span className="p-1 rounded-md bg-amber-400 text-slate-900">
-                      <Crown className="w-3 h-3 fill-slate-900" />
-                    </span>
-                  )}
+                  <div className="flex items-center space-x-1">
+                    {slot.isEVCharger && (
+                      <span className="p-1 rounded-md bg-blue-500 text-white" title={`${slot.chargerKw || 150}kW Fast Charger`}>
+                        <Zap className="w-3 h-3 fill-white" />
+                      </span>
+                    )}
+                    {slot.type === 'ACCESSIBLE' && (
+                      <span className="p-1 rounded-md bg-emerald-600 text-white">
+                        <Accessibility className="w-3 h-3" />
+                      </span>
+                    )}
+                    {slot.type === 'VIP' && (
+                      <span className="p-1 rounded-md bg-amber-400 text-slate-900">
+                        <Crown className="w-3 h-3 fill-slate-900" />
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Zone Info */}
-                <div className="text-[10px] opacity-80 font-medium truncate">
+                <div className="text-[10px] opacity-80 font-medium truncate my-1">
                   {slot.zone || 'Zone A'}
                 </div>
 
                 {/* Bottom Price & Status */}
-                <div className="flex items-center justify-between text-[11px] font-bold border-t border-current/10 pt-1.5">
-                  <span>₹{slot.hourlyPrice}/hr</span>
-                  <span className="text-[10px] tracking-wide uppercase">{statusBadge}</span>
+                <div className="flex items-center justify-between gap-1 text-[11px] font-extrabold border-t border-current/15 pt-1.5 min-w-0">
+                  <span className="whitespace-nowrap font-black text-xs">₹{slot.hourlyPrice}<span className="text-[9px] font-normal opacity-75">/hr</span></span>
+                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 shrink-0">
+                    {slot.status === 'AVAILABLE' ? 'FREE' : slot.status}
+                  </span>
                 </div>
 
                 {/* Selection Checkmark */}
