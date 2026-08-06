@@ -1,0 +1,206 @@
+// Prisma Schema for ParkSmart AI Smart Parking Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String               @id @default(uuid())
+  email            String               @unique
+  password         String
+  fullName         String
+  phone            String?
+  role             String               @default("CUSTOMER") // CUSTOMER, PARKING_OPERATOR, MALL_OWNER, VALET_STAFF, ADMINISTRATOR
+  avatarUrl        String?
+  isVerified       Boolean              @default(true)
+  loyaltyPoints    Int                  @default(150)
+  walletBalance    Float                @default(500.0)
+  membershipTier   String               @default("Silver") // Silver, Gold, Platinum
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  vehicles         Vehicle[]
+  reservations     Reservation[]
+  payments         Payment[]
+  reviews          Review[]
+  notifications    Notification[]
+  valetTickets     ValetTicket[]
+  marketplaceListings MarketplaceListing[]
+}
+
+model Vehicle {
+  id           String        @id @default(uuid())
+  userId       String
+  plateNumber  String        @unique
+  make         String
+  model        String
+  color        String?
+  isEV         Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+  valetTickets ValetTicket[]
+}
+
+model ParkingLocation {
+  id             String           @id @default(uuid())
+  name           String
+  slug           String           @unique
+  category       String           // MALL, HOSPITAL, AIRPORT, STADIUM, UNIVERSITY, IT_PARK, CORPORATE_OFFICE, RAILWAY_STATION, PUBLIC_STREET
+  address        String
+  city           String
+  state          String?
+  zipCode        String?
+  latitude       Float
+  longitude      Float
+  totalSlots     Int
+  hourlyRate     Float
+  evChargingRate Float            @default(25.0)
+  valetFee       Float            @default(100.0)
+  description    String?
+  imageUrl       String?
+  rating         Float            @default(4.8)
+  hasValet       Boolean          @default(true)
+  hasEVCharging  Boolean          @default(true)
+  hasDisabledAccess Boolean       @default(true)
+  openingHours   String           @default("24/7")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  floors         Floor[]
+  slots          Slot[]
+  reservations   Reservation[]
+  reviews        Review[]
+}
+
+model Floor {
+  id         String          @id @default(uuid())
+  locationId String
+  name       String          // e.g. Basement 1, Floor 2
+  level      Int
+  mapSvgUrl  String?
+  createdAt  DateTime        @default(now())
+
+  location   ParkingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  slots      Slot[]
+}
+
+model Slot {
+  id             String           @id @default(uuid())
+  locationId     String
+  floorId        String
+  slotNumber     String           // e.g., B1-A01, B2-E04 (EV)
+  zone           String           // e.g. Zone A, OPD Wing, Gate 2
+  type           String           @default("REGULAR") // REGULAR, EV_CHARGING, ACCESSIBLE, VIP, VALET_ONLY
+  status         String           @default("AVAILABLE") // AVAILABLE, OCCUPIED, RESERVED, UNDER_MAINTENANCE
+  hourlyPrice    Float
+  distanceToLift Int              @default(20) // in meters
+  isEVCharger    Boolean          @default(false)
+  chargerKw      Float?           @default(0.0) // e.g. 150kW fast charger
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  location       ParkingLocation  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  floor          Floor            @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  reservations   Reservation[]
+}
+
+model Reservation {
+  id             String            @id @default(uuid())
+  userId         String
+  locationId     String
+  slotId         String
+  vehicleId      String
+  startTime      DateTime
+  endTime        DateTime
+  totalAmount    Float
+  status         String            @default("PENDING") // PENDING, ACTIVE, COMPLETED, CANCELLED, EXPIRED
+  qrCodeUrl      String?
+  entryTime      DateTime?
+  exitTime       DateTime?
+  autoReleasedAt DateTime?
+  createdAt      DateTime          @default(now())
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location       ParkingLocation   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  slot           Slot              @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  vehicle        Vehicle           @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  payment        Payment?
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  reservationId String        @unique
+  userId        String
+  amount        Float
+  status        String        @default("PENDING") // PENDING, COMPLETED, FAILED, REFUNDED
+  method        String        @default("UPI") // UPI, CREDIT_CARD, DEBIT_CARD, WALLET, CASH
+  transactionId String        @unique
+  receiptUrl    String?
+  paidAt        DateTime      @default(now())
+
+  reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ValetTicket {
+  id           String      @id @default(uuid())
+  userId       String
+  vehicleId    String
+  parkingSlot  String?
+  keyTagNumber String
+  status       String      @default("REQUESTED") // REQUESTED, PARKED, RETRIEVAL_REQUESTED, DELIVERED
+  requestedAt  DateTime    @default(now())
+  deliveredAt  DateTime?
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+}
+
+model MarketplaceListing {
+  id           String   @id @default(uuid())
+  userId       String
+  title        String
+  address      String
+  city         String
+  hourlyRate   Float
+  dailyRate    Float
+  availableFrom String
+  availableTo  String
+  isVerified   Boolean  @default(true)
+  imageUrl     String?
+  contactPhone String
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String          @id @default(uuid())
+  userId     String
+  locationId String
+  rating     Int
+  comment    String
+  createdAt  DateTime        @default(now())
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   ParkingLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // INFO, WARNING, SUCCESS, PROMO
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
