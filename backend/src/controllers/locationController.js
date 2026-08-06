@@ -1,8 +1,10 @@
 const prisma = require('../config/prisma');
 const { recommendBestSlot } = require('../services/aiRecommender');
+const { seedDatabase } = require('../services/seedService');
 
 exports.getLocations = async (req, res) => {
   try {
+    await seedDatabase();
     const { category, search, hasEV, city } = req.query;
 
     const whereClause = {};
@@ -68,6 +70,7 @@ exports.getLocations = async (req, res) => {
 
 exports.getLocationBySlug = async (req, res) => {
   try {
+    await seedDatabase();
     const { slug } = req.params;
 
     const location = await prisma.parkingLocation.findUnique({
